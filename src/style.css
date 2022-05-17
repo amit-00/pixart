@@ -1,11 +1,23 @@
 html {
-  background-color: #999;
+  background-color: #61515B;
 }
 
-#canvas {
+.canvas {
   background-color: #fff;
   border: solid 1px #333;
   height: 90vh;
   margin: 1rem auto;
   display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+#background {
+  z-index: 0;
+}
+
+#layer1 {
+  z-index: 1;
+  background: none;
 }

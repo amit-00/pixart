@@ -1,28 +1,35 @@
 import './style.css';
 
-let canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D;
+let canvas: HTMLCanvasElement, 
+    bg: HTMLCanvasElement, 
+    ctx: CanvasRenderingContext2D,
+    bg_ctx: CanvasRenderingContext2D,
+    size: number = 800,
+    pixelSize: number = 50,
+    color: string = 'red',
+    brushSize: number = 1,
+    isDrawing: boolean = false,
+    toggleErase: boolean = false;
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  canvas = document.querySelector<HTMLCanvasElement>('#canvas')!
-  ctx = canvas.getContext('2d')!
+  bg = document.querySelector<HTMLCanvasElement>('#background')!
+  bg_ctx = bg.getContext('2d')!
 
-  canvas.addEventListener('mouseover', e => {
-    hoverPixel(canvas, e);
-  });
+  canvas = document.querySelector<HTMLCanvasElement>('#layer1')!
+  ctx = bg.getContext('2d')!
 
-  canvas.addEventListener('mousedown', e => {
-    colorPixel(canvas, e, 'red');
-  });
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('mouseleave', stopDraw);
 
-  canvas.width = 1200;
-  canvas.height = 1200;
-  ctx.fillStyle = 'cornflowerblue';
-  ctx.strokeStyle = '#ccc';
-  ctx.lineWidth = 2;
-  ctx.textAlign = 'start';
-  ctx.font = 'normal 30px Arial';
-  drawGrid(100);
+  bg.width = size;
+  bg.height = size;
+  canvas.width = size;
+  canvas.height = size;
+  drawGrid();
+  ctx.fillStyle = color;
 });
 
 document.addEventListener('keydown', e => {
@@ -31,21 +38,28 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function drawGrid(gap: number) {
-  ctx.beginPath();
-  for (let x = gap; x<canvas.width; x = x+gap) {
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-  }
-  for (let y = gap; y<canvas.height; y = y+gap) {
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.height, y);
-  }
-  ctx.stroke();
-  ctx.closePath();
+function drawRect(ctx: CanvasRenderingContext2D, color: string, x: number, y: number, width: number, height: number) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
 }
 
-function mouseLocation(canvas: HTMLCanvasElement, event: MouseEvent) {
+function drawGrid() {
+  // ctx.beginPath();
+  drawRect(bg_ctx, '#B8B8B4', 0, 0, bg.width, bg.height);
+  // ctx.fillStyle = '#78797A';
+  for (let y = 0; y < size; y+=pixelSize) {
+    for (let x = 0; x < size; x+=pixelSize) {
+      if (((y + x)/pixelSize)%2 === 1) continue;
+      // ctx.rect(x, y, pixelSize, pixelSize);
+      drawRect(bg_ctx,'#78797A', x, y, pixelSize, pixelSize);
+    }
+  }
+  // ctx.fill();
+  // ctx.closePath();
+  ctx.fillStyle = color;
+}
+
+function mouseLocation(event: MouseEvent) {
   let xPosition: number;
   let yPosition: number;
 
@@ -55,31 +69,47 @@ function mouseLocation(canvas: HTMLCanvasElement, event: MouseEvent) {
   const x = elementRelativeX * canvas.width / rect.width;
   const y = elementRelativeY * canvas.height / rect.height;
 
-  xPosition = Math.floor(x/100)*100;
-  yPosition = Math.floor(y/100)*100;
+  xPosition = Math.floor(x/pixelSize)*pixelSize;
+  yPosition = Math.floor(y/pixelSize)*pixelSize;
 
   return [xPosition, yPosition];
 }
 
-function hoverPixel(canvas: HTMLCanvasElement, event: MouseEvent) {
-  colorPixel(canvas, event, 'grey');
-
+function startDraw(event: MouseEvent) {
+  isDrawing = true;
+  console.log(isDrawing);
+  ctx.beginPath();
+  colorPixel(event);
 }
 
-function colorPixel(canvas: HTMLCanvasElement, event: MouseEvent, color: string) {
-  const position = mouseLocation(canvas, event);
+function draw(event: MouseEvent) {
+  if(!isDrawing) return;
+  colorPixel(event);
+}
+
+function stopDraw() {
+  isDrawing = false;
+  console.log(isDrawing);
+  ctx.closePath();
+}
+
+function erase() {
+  toggleErase = !toggleErase;
+}
+
+function colorPixel(event: MouseEvent) {
+  const position = mouseLocation(event);
   const xPosition = position[0];
   const yPosition = position[1];
 
   // console.log('x: ' + xPosition + ', y: ' + yPosition);
-
-  ctx.beginPath();
-  ctx.rect(xPosition, yPosition, 100, 100);
-  ctx.fillStyle= color;
-  ctx.fill();
+  // ctx.rect(xPosition, yPosition, pixelSize * brushSize, pixelSize * brushSize);
+  // ctx.fill();
+  drawRect(ctx, color, xPosition, yPosition, pixelSize * brushSize, pixelSize * brushSize);
 }
 
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawGrid(100);
+  drawGrid();
+  ctx.fillStyle = color;
 }
